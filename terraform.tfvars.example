@@ -1,0 +1,49 @@
+# Terraform Variables - YOUR SPECIFIC VALUES
+# Fill in your details here
+
+# Your Azure Subscription ID
+subscription_id = "YOUR SUB ID HERE"
+
+# Admin username for ISE VMs
+admin_username = "iseadmin"
+
+# SSH Public Key - YOU NEED TO GENERATE THIS
+# Run the generate-ssh-key.ps1 script to create your SSH key pair
+# Then paste the contents of ise-key.pub here
+ssh_public_key = "SSH KEY HERE"
+
+# VM Size (D8s_v4 = 8 vCPU, 32GB RAM)
+vm_size = "Standard_D8s_v4"
+
+# ISE Version
+ise_image_sku = "cisco-ise_3_3"
+
+#################################################
+# UK SOUTH (PRIMARY) CONFIGURATION
+#################################################
+
+uks_location            = "uksouth"
+uks_resource_group_name = "rg-ise-pri-uks"
+uks_vnet_name           = "vnet-ise-uks"
+uks_vnet_cidr           = "10.10.0.0/16"
+uks_subnet_name         = "snet-ise-uks"
+uks_subnet_cidr         = "10.10.1.0/24"
+uks_nsg_name            = "nsg-ise-uks"
+uks_route_table_name    = "rt-ise-uks"
+uks_vm_name             = "ise-pri-uks"
+uks_vm_private_ip       = "10.10.1.10"
+
+#################################################
+# UK WEST (SECONDARY) CONFIGURATION
+#################################################
+
+ukw_location            = "ukwest"
+ukw_resource_group_name = "rg-ise-sec-ukw"
+ukw_vnet_name           = "vnet-ise-ukw"
+ukw_vnet_cidr           = "10.20.0.0/16"
+ukw_subnet_name         = "snet-ise-ukw"
+ukw_subnet_cidr         = "10.20.1.0/24"
+ukw_nsg_name            = "nsg-ise-ukw"
+ukw_route_table_name    = "rt-ise-ukw"
+ukw_vm_name             = "ise-sec-ukw"
+ukw_vm_private_ip       = "10.20.1.10"

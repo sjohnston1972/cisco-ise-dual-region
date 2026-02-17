@@ -1,0 +1,44 @@
+# Terraform files to ignore
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# SSH Keys - NEVER COMMIT THESE
+ise-key
+ise-key.pub
+*.pem
+*.ppk
+
+# Terraform variable files containing secrets
+terraform.tfvars
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-*
+
+azure-key.txt
