@@ -159,6 +159,21 @@ resource "azurerm_linux_virtual_machine" "uks_ise_vm" {
   size                = var.vm_size
   admin_username      = var.admin_username
   
+  # ISE Configuration via user_data (cloud-init)
+  user_data = base64encode(<<-EOT
+    hostname=${var.uks_vm_name}
+    primarynameserver=8.8.8.8
+    dnsdomain=test.com
+    ntpserver=time.windows.com
+    timezone=Etc/UTC
+    password=Extr748a
+    ersapi=no
+    openapi=no
+    pxGrid=no
+    pxgrid_cloud=no
+  EOT
+  )
+  
   network_interface_ids = [
     azurerm_network_interface.uks_ise_nic.id,
   ]
@@ -336,6 +351,21 @@ resource "azurerm_linux_virtual_machine" "ukw_ise_vm" {
   resource_group_name = azurerm_resource_group.ukw_rg.name
   size                = var.vm_size
   admin_username      = var.admin_username
+  
+  # ISE Configuration via user_data (cloud-init)
+  user_data = base64encode(<<-EOT
+    hostname=${var.ukw_vm_name}
+    primarynameserver=8.8.8.8
+    dnsdomain=test.com
+    ntpserver=time.windows.com
+    timezone=Etc/UTC
+    password=Extr748a
+    ersapi=no
+    openapi=no
+    pxGrid=no
+    pxgrid_cloud=no
+  EOT
+  )
   
   network_interface_ids = [
     azurerm_network_interface.ukw_ise_nic.id,
