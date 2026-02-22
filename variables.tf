@@ -173,3 +173,131 @@ variable "ukw_vm_private_ip" {
   type        = string
   default     = "10.20.1.10"
 }
+
+#################################################
+# US EAST (TERTIARY) VARIABLES
+#################################################
+
+variable "use_location" {
+  description = "Azure region for US East resources"
+  type        = string
+  default     = "eastus"
+}
+
+variable "use_resource_group_name" {
+  description = "Resource Group name for US East"
+  type        = string
+  default     = "rg-ise-ter-use"
+}
+
+variable "use_vnet_name" {
+  description = "VNet name for US East"
+  type        = string
+  default     = "vnet-ise-use"
+}
+
+variable "use_vnet_cidr" {
+  description = "VNet CIDR for US East"
+  type        = string
+  default     = "10.30.0.0/16"
+}
+
+variable "use_subnet_name" {
+  description = "Subnet name for ISE in US East"
+  type        = string
+  default     = "snet-ise-use"
+}
+
+variable "use_subnet_cidr" {
+  description = "Subnet CIDR for US East"
+  type        = string
+  default     = "10.30.1.0/24"
+}
+
+variable "use_nsg_name" {
+  description = "NSG name for US East"
+  type        = string
+  default     = "nsg-ise-use"
+}
+
+variable "use_route_table_name" {
+  description = "Route Table name for US East"
+  type        = string
+  default     = "rt-ise-use"
+}
+
+variable "use_vm_name" {
+  description = "VM name for US East ISE"
+  type        = string
+  default     = "ise-ter-use"
+}
+
+variable "use_vm_private_ip" {
+  description = "Static private IP for US East ISE VM"
+  type        = string
+  default     = "10.30.1.10"
+}
+
+#################################################
+# US WEST (QUATERNARY) VARIABLES
+#################################################
+
+variable "usw_location" {
+  description = "Azure region for US West resources"
+  type        = string
+  default     = "westus"
+}
+
+variable "usw_resource_group_name" {
+  description = "Resource Group name for US West"
+  type        = string
+  default     = "rg-ise-qua-usw"
+}
+
+variable "usw_vnet_name" {
+  description = "VNet name for US West"
+  type        = string
+  default     = "vnet-ise-usw"
+}
+
+variable "usw_vnet_cidr" {
+  description = "VNet CIDR for US West"
+  type        = string
+  default     = "10.40.0.0/16"
+}
+
+variable "usw_subnet_name" {
+  description = "Subnet name for ISE in US West"
+  type        = string
+  default     = "snet-ise-usw"
+}
+
+variable "usw_subnet_cidr" {
+  description = "Subnet CIDR for US West"
+  type        = string
+  default     = "10.40.1.0/24"
+}
+
+variable "usw_nsg_name" {
+  description = "NSG name for US West"
+  type        = string
+  default     = "nsg-ise-usw"
+}
+
+variable "usw_route_table_name" {
+  description = "Route Table name for US West"
+  type        = string
+  default     = "rt-ise-usw"
+}
+
+variable "usw_vm_name" {
+  description = "VM name for US West ISE"
+  type        = string
+  default     = "ise-qua-usw"
+}
+
+variable "usw_vm_private_ip" {
+  description = "Static private IP for US West ISE VM"
+  type        = string
+  default     = "10.40.1.10"
+}
