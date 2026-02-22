@@ -1,5 +1,5 @@
-# Terraform configuration for dual-region ISE deployment
-# This deploys ISE nodes in UK South (Primary) and UK West (Secondary)
+# Terraform configuration for quad-region ISE deployment
+# This deploys ISE nodes in UK South (Primary), UK West (Secondary), US East (Tertiary), and US West (Quaternary)
 
 # Configure the Azure Provider
 terraform {
@@ -400,5 +400,391 @@ resource "azurerm_linux_virtual_machine" "ukw_ise_vm" {
     Environment = "Lab"
     Project     = "ISE-HA"
     Role        = "Secondary"
+  }
+}
+
+#################################################
+# US EAST (TERTIARY) RESOURCES
+#################################################
+
+# Resource Group for US East
+resource "azurerm_resource_group" "use_rg" {
+  name     = var.use_resource_group_name
+  location = var.use_location
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+    Region      = "US-East"
+    Role        = "Tertiary"
+  }
+}
+
+# Virtual Network for US East
+resource "azurerm_virtual_network" "use_vnet" {
+  name                = var.use_vnet_name
+  address_space       = [var.use_vnet_cidr]
+  location            = azurerm_resource_group.use_rg.location
+  resource_group_name = azurerm_resource_group.use_rg.name
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Subnet for ISE in US East
+resource "azurerm_subnet" "use_ise_subnet" {
+  name                 = var.use_subnet_name
+  resource_group_name  = azurerm_resource_group.use_rg.name
+  virtual_network_name = azurerm_virtual_network.use_vnet.name
+  address_prefixes     = [var.use_subnet_cidr]
+}
+
+# Network Security Group for US East ISE
+resource "azurerm_network_security_group" "use_nsg" {
+  name                = var.use_nsg_name
+  location            = azurerm_resource_group.use_rg.location
+  resource_group_name = azurerm_resource_group.use_rg.name
+
+  # Allow all inbound (you can restrict this later)
+  security_rule {
+    name                       = "AllowAllInbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  # Allow all outbound (you can restrict this later)
+  security_rule {
+    name                       = "AllowAllOutbound"
+    priority                   = 100
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Associate NSG with US East Subnet
+resource "azurerm_subnet_network_security_group_association" "use_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.use_ise_subnet.id
+  network_security_group_id = azurerm_network_security_group.use_nsg.id
+}
+
+# Route Table for US East
+resource "azurerm_route_table" "use_rt" {
+  name                = var.use_route_table_name
+  location            = azurerm_resource_group.use_rg.location
+  resource_group_name = azurerm_resource_group.use_rg.name
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Associate Route Table with US East Subnet
+resource "azurerm_subnet_route_table_association" "use_rt_assoc" {
+  subnet_id      = azurerm_subnet.use_ise_subnet.id
+  route_table_id = azurerm_route_table.use_rt.id
+}
+
+# Public IP for US East ISE (for management access)
+resource "azurerm_public_ip" "use_ise_pip" {
+  name                = "${var.use_vm_name}-pip"
+  location            = azurerm_resource_group.use_rg.location
+  resource_group_name = azurerm_resource_group.use_rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Network Interface for US East ISE
+resource "azurerm_network_interface" "use_ise_nic" {
+  name                = "${var.use_vm_name}-nic"
+  location            = azurerm_resource_group.use_rg.location
+  resource_group_name = azurerm_resource_group.use_rg.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.use_ise_subnet.id
+    private_ip_address_allocation = "Static"
+    private_ip_address            = var.use_vm_private_ip
+    public_ip_address_id          = azurerm_public_ip.use_ise_pip.id
+  }
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# US East ISE Virtual Machine
+resource "azurerm_linux_virtual_machine" "use_ise_vm" {
+  name                = var.use_vm_name
+  location            = azurerm_resource_group.use_rg.location
+  resource_group_name = azurerm_resource_group.use_rg.name
+  size                = var.vm_size
+  admin_username      = var.admin_username
+
+  # ISE Configuration via user_data (cloud-init)
+  user_data = base64encode(<<-EOT
+    hostname=${var.use_vm_name}
+    primarynameserver=8.8.8.8
+    dnsdomain=test.com
+    ntpserver=time.windows.com
+    timezone=Etc/UTC
+    password=Extr748a
+    ersapi=no
+    openapi=no
+    pxGrid=no
+    pxgrid_cloud=no
+  EOT
+  )
+
+  network_interface_ids = [
+    azurerm_network_interface.use_ise_nic.id,
+  ]
+
+  admin_ssh_key {
+    username   = var.admin_username
+    public_key = var.ssh_public_key
+  }
+
+  os_disk {
+    name                 = "${var.use_vm_name}-osdisk"
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+    disk_size_gb         = 600
+  }
+
+  plan {
+    name      = var.ise_image_sku
+    product   = var.ise_image_offer
+    publisher = var.ise_image_publisher
+  }
+
+  source_image_reference {
+    publisher = var.ise_image_publisher
+    offer     = var.ise_image_offer
+    sku       = var.ise_image_sku
+    version   = "latest"
+  }
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+    Role        = "Tertiary"
+  }
+}
+
+#################################################
+# US WEST (QUATERNARY) RESOURCES
+#################################################
+
+# Resource Group for US West
+resource "azurerm_resource_group" "usw_rg" {
+  name     = var.usw_resource_group_name
+  location = var.usw_location
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+    Region      = "US-West"
+    Role        = "Quaternary"
+  }
+}
+
+# Virtual Network for US West
+resource "azurerm_virtual_network" "usw_vnet" {
+  name                = var.usw_vnet_name
+  address_space       = [var.usw_vnet_cidr]
+  location            = azurerm_resource_group.usw_rg.location
+  resource_group_name = azurerm_resource_group.usw_rg.name
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Subnet for ISE in US West
+resource "azurerm_subnet" "usw_ise_subnet" {
+  name                 = var.usw_subnet_name
+  resource_group_name  = azurerm_resource_group.usw_rg.name
+  virtual_network_name = azurerm_virtual_network.usw_vnet.name
+  address_prefixes     = [var.usw_subnet_cidr]
+}
+
+# Network Security Group for US West ISE
+resource "azurerm_network_security_group" "usw_nsg" {
+  name                = var.usw_nsg_name
+  location            = azurerm_resource_group.usw_rg.location
+  resource_group_name = azurerm_resource_group.usw_rg.name
+
+  # Allow all inbound (you can restrict this later)
+  security_rule {
+    name                       = "AllowAllInbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  # Allow all outbound (you can restrict this later)
+  security_rule {
+    name                       = "AllowAllOutbound"
+    priority                   = 100
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Associate NSG with US West Subnet
+resource "azurerm_subnet_network_security_group_association" "usw_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.usw_ise_subnet.id
+  network_security_group_id = azurerm_network_security_group.usw_nsg.id
+}
+
+# Route Table for US West
+resource "azurerm_route_table" "usw_rt" {
+  name                = var.usw_route_table_name
+  location            = azurerm_resource_group.usw_rg.location
+  resource_group_name = azurerm_resource_group.usw_rg.name
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Associate Route Table with US West Subnet
+resource "azurerm_subnet_route_table_association" "usw_rt_assoc" {
+  subnet_id      = azurerm_subnet.usw_ise_subnet.id
+  route_table_id = azurerm_route_table.usw_rt.id
+}
+
+# Public IP for US West ISE (for management access)
+resource "azurerm_public_ip" "usw_ise_pip" {
+  name                = "${var.usw_vm_name}-pip"
+  location            = azurerm_resource_group.usw_rg.location
+  resource_group_name = azurerm_resource_group.usw_rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# Network Interface for US West ISE
+resource "azurerm_network_interface" "usw_ise_nic" {
+  name                = "${var.usw_vm_name}-nic"
+  location            = azurerm_resource_group.usw_rg.location
+  resource_group_name = azurerm_resource_group.usw_rg.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.usw_ise_subnet.id
+    private_ip_address_allocation = "Static"
+    private_ip_address            = var.usw_vm_private_ip
+    public_ip_address_id          = azurerm_public_ip.usw_ise_pip.id
+  }
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+  }
+}
+
+# US West ISE Virtual Machine
+resource "azurerm_linux_virtual_machine" "usw_ise_vm" {
+  name                = var.usw_vm_name
+  location            = azurerm_resource_group.usw_rg.location
+  resource_group_name = azurerm_resource_group.usw_rg.name
+  size                = var.vm_size
+  admin_username      = var.admin_username
+
+  # ISE Configuration via user_data (cloud-init)
+  user_data = base64encode(<<-EOT
+    hostname=${var.usw_vm_name}
+    primarynameserver=8.8.8.8
+    dnsdomain=test.com
+    ntpserver=time.windows.com
+    timezone=Etc/UTC
+    password=Extr748a
+    ersapi=no
+    openapi=no
+    pxGrid=no
+    pxgrid_cloud=no
+  EOT
+  )
+
+  network_interface_ids = [
+    azurerm_network_interface.usw_ise_nic.id,
+  ]
+
+  admin_ssh_key {
+    username   = var.admin_username
+    public_key = var.ssh_public_key
+  }
+
+  os_disk {
+    name                 = "${var.usw_vm_name}-osdisk"
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+    disk_size_gb         = 600
+  }
+
+  plan {
+    name      = var.ise_image_sku
+    product   = var.ise_image_offer
+    publisher = var.ise_image_publisher
+  }
+
+  source_image_reference {
+    publisher = var.ise_image_publisher
+    offer     = var.ise_image_offer
+    sku       = var.ise_image_sku
+    version   = "latest"
+  }
+
+  tags = {
+    Environment = "Lab"
+    Project     = "ISE-HA"
+    Role        = "Quaternary"
   }
 }
