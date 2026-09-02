@@ -10,6 +10,17 @@ terraform {
     }
   }
   required_version = ">= 1.0"
+
+  # Remote state in Azure Storage: gives the team shared state, blob-lease
+  # locking (a concurrent apply is blocked instead of corrupting state),
+  # and encryption at rest. Values are intentionally NOT hardcoded here
+  # (the storage account name is globally unique per environment and must
+  # not be guessed/invented) - supply them at `terraform init` time via
+  # -backend-config flags or a local, gitignored backend config file.
+  # See README.md "Remote State Backend" for the one-time bootstrap and
+  # exact init command. CI runs `terraform init -backend=false` so this
+  # block is never contacted for fmt/validate/lint checks.
+  backend "azurerm" {}
 }
 
 provider "azurerm" {

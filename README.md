@@ -36,6 +36,61 @@ This Terraform configuration deploys Cisco Identity Services Engine (ISE) 3.3 in
 ✅ Azure subscription with Contributor access
 ✅ ISE marketplace image terms accepted
 
+## Remote State Backend
+
+This configuration uses an `azurerm` backend (`main.tf`) so Terraform state
+is stored in Azure Storage instead of a local `terraform.tfstate` file. This
+gives the team shared, locked state (a concurrent `apply` is blocked rather
+than corrupting state) and encryption at rest. The backend block is
+deliberately empty in source control - no storage account name is hardcoded
+- so you must bootstrap the storage once and point `terraform init` at it.
+
+### One-time bootstrap (run once per environment, by whoever administers state)
+
+```bash
+az group create -n rg-tfstate -l uksouth
+az storage account create \
+  -n <globally-unique-name> \
+  -g rg-tfstate \
+  -l uksouth \
+  --sku Standard_LRS \
+  --encryption-services blob \
+  --min-tls-version TLS1_2 \
+  --allow-blob-public-access false
+az storage container create -n tfstate --account-name <globally-unique-name>
+```
+
+### Initialize against the backend
+
+Create a **local, gitignored** `backend.hcl` (already covered by
+`.gitignore`) with your values:
+
+```hcl
+resource_group_name  = "rg-tfstate"
+storage_account_name = "<globally-unique-name>"
+container_name        = "tfstate"
+key                   = "ise-dual-region.tfstate"
+```
+
+Then initialize:
+
+```powershell
+terraform init -backend-config="backend.hcl"
+```
+
+Alternatively pass the same four values individually as `-backend-config`
+flags on the command line instead of a file.
+
+If you have existing local state from before this change, add
+`-migrate-state` to the `init` command above so Terraform copies it into
+the new remote backend instead of starting empty (this repo does not
+script that migration automatically - review the plan before confirming
+it, since it is a one-time, effectively irreversible move of your state
+of record).
+
+CI never touches this backend: it runs `terraform init -backend=false` so
+`fmt`/`validate`/lint checks need no Azure credentials.
+
 ## Deployment Steps
 
 ### Step 1: Generate SSH Key Pair
@@ -71,14 +126,16 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC... ise-azure-deployment
 
 ### Step 3: Initialize Terraform
 
-In PowerShell:
+Complete the "Remote State Backend" bootstrap above once, then initialize
+with your `backend.hcl`:
 
 ```powershell
 cd C:\terraform\ise
-terraform init
+terraform init -backend-config="backend.hcl"
 ```
 
-This downloads the Azure provider and sets up Terraform.
+This downloads the Azure provider, configures the remote state backend, and
+sets up Terraform.
 
 ### Step 4: Review the Deployment Plan
 

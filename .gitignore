@@ -17,6 +17,10 @@ terraform.tfvars
 *.auto.tfvars
 *.auto.tfvars.json
 
+# Backend config files (may contain storage account access details)
+backend.hcl
+*.backend.hcl
+
 # Override files
 override.tf
 override.tf.json
