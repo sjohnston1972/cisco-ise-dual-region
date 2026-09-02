@@ -88,6 +88,11 @@ variable "uks_vnet_cidr" {
   description = "VNet CIDR for UK South"
   type        = string
   default     = "10.10.0.0/16"
+
+  validation {
+    condition     = can(cidrhost(var.uks_vnet_cidr, 0))
+    error_message = "uks_vnet_cidr must be a valid CIDR (e.g. 10.10.0.0/16)."
+  }
 }
 
 variable "uks_subnet_name" {
@@ -100,6 +105,11 @@ variable "uks_subnet_cidr" {
   description = "Subnet CIDR for UK South"
   type        = string
   default     = "10.10.1.0/24"
+
+  validation {
+    condition     = can(cidrhost(var.uks_subnet_cidr, 0))
+    error_message = "uks_subnet_cidr must be a valid CIDR (e.g. 10.10.1.0/24)."
+  }
 }
 
 variable "uks_nsg_name" {
@@ -124,6 +134,11 @@ variable "uks_vm_private_ip" {
   description = "Static private IP for UK South ISE VM"
   type        = string
   default     = "10.10.1.10"
+
+  validation {
+    condition     = can(regex("^(\\d{1,3}\\.){3}\\d{1,3}$", var.uks_vm_private_ip)) && can(cidrhost("${var.uks_vm_private_ip}/32", 0))
+    error_message = "uks_vm_private_ip must be a valid IPv4 address."
+  }
 }
 
 #################################################
@@ -152,6 +167,11 @@ variable "ukw_vnet_cidr" {
   description = "VNet CIDR for UK West"
   type        = string
   default     = "10.20.0.0/16"
+
+  validation {
+    condition     = can(cidrhost(var.ukw_vnet_cidr, 0))
+    error_message = "ukw_vnet_cidr must be a valid CIDR (e.g. 10.20.0.0/16)."
+  }
 }
 
 variable "ukw_subnet_name" {
@@ -164,6 +184,11 @@ variable "ukw_subnet_cidr" {
   description = "Subnet CIDR for UK West"
   type        = string
   default     = "10.20.1.0/24"
+
+  validation {
+    condition     = can(cidrhost(var.ukw_subnet_cidr, 0))
+    error_message = "ukw_subnet_cidr must be a valid CIDR (e.g. 10.20.1.0/24)."
+  }
 }
 
 variable "ukw_nsg_name" {
@@ -188,4 +213,9 @@ variable "ukw_vm_private_ip" {
   description = "Static private IP for UK West ISE VM"
   type        = string
   default     = "10.20.1.10"
+
+  validation {
+    condition     = can(regex("^(\\d{1,3}\\.){3}\\d{1,3}$", var.ukw_vm_private_ip)) && can(cidrhost("${var.ukw_vm_private_ip}/32", 0))
+    error_message = "ukw_vm_private_ip must be a valid IPv4 address."
+  }
 }
