@@ -161,7 +161,15 @@ Access ISE in your browser:
 
 **Initial credentials:**
 - Username: `iseadmin`
-- Password: (you'll set this during initial setup)
+- Password: whatever value you supplied for `var.ise_admin_password` at apply time
+
+> **Security note:** An earlier version of this README and `main.tf`
+> hardcoded and documented a literal example admin password in this
+> **public** repository. That exact value must be treated as permanently
+> compromised - **never reuse it for anything.** It has been removed from
+> the current source, but it still exists in this repo's git history (which
+> cannot be altered here). If any real ISE node was ever deployed with that
+> password, rotate its admin credentials immediately.
 
 ### Step 9: Configure ISE
 
@@ -173,7 +181,7 @@ Access ISE in your browser:
      - Primary DNS: `8.8.8.8`
      - NTP Server: `time.windows.com`
      - Timezone: `Etc/UTC`
-     - Set admin password (e.g., `Extr748a`)
+     - Set admin password (value of `var.ise_admin_password`, i.e. whatever you supplied via `terraform.tfvars` / `TF_VAR_ise_admin_password` / your secret store)
      - ERS API: No
      - pxGrid: No
      - pxGrid Cloud: No
