@@ -46,6 +46,12 @@ variable "ise_image_sku" {
   default     = "cisco-ise_3_3"
 }
 
+variable "ise_image_version" {
+  description = "Exact ISE marketplace image version to pin (avoid 'latest' so both HA nodes deploy the same build). Discover available versions with: az vm image list --publisher cisco --offer cisco-ise-virtual --sku cisco-ise_3_3 --all -o table"
+  type        = string
+  default     = "3.3.430"
+}
+
 #################################################
 # UK SOUTH (PRIMARY) VARIABLES
 #################################################

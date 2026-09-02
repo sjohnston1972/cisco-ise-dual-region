@@ -200,7 +200,7 @@ resource "azurerm_linux_virtual_machine" "uks_ise_vm" {
     publisher = var.ise_image_publisher
     offer     = var.ise_image_offer
     sku       = var.ise_image_sku
-    version   = "latest"
+    version   = var.ise_image_version
   }
   
   tags = {
@@ -393,7 +393,7 @@ resource "azurerm_linux_virtual_machine" "ukw_ise_vm" {
     publisher = var.ise_image_publisher
     offer     = var.ise_image_offer
     sku       = var.ise_image_sku
-    version   = "latest"
+    version   = var.ise_image_version
   }
   
   tags = {
