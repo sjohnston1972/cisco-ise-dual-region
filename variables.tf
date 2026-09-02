@@ -35,6 +35,20 @@ variable "ise_admin_password" {
   description = "Initial ISE admin password (set at first boot via user_data). Must be supplied at apply time (tfvars/env/secret store) - never hardcode this or commit a real value."
   type        = string
   sensitive   = true
+
+  # NOTE: Go's RE2 regex engine (used by Terraform's regex()/can()) does not
+  # support lookahead assertions, so a single "(?=...)" pattern silently
+  # fails to compile and can() would reject every value, including valid
+  # ones. Each character class is checked with its own regex instead.
+  validation {
+    condition = (
+      length(var.ise_admin_password) >= 8 &&
+      can(regex("[a-z]", var.ise_admin_password)) &&
+      can(regex("[A-Z]", var.ise_admin_password)) &&
+      can(regex("[0-9]", var.ise_admin_password))
+    )
+    error_message = "ise_admin_password must be at least 8 characters and include at least one uppercase letter, one lowercase letter, and one digit."
+  }
 }
 
 variable "vm_size" {
