@@ -51,6 +51,19 @@ variable "ise_admin_password" {
   }
 }
 
+variable "allowed_mgmt_cidrs" {
+  description = "Source CIDRs permitted to reach ISE management (HTTPS 443, SSH 22). Must not include 0.0.0.0/0 - scope this to your actual admin source networks (VPN, jump host, office egress, etc.)."
+  type        = list(string)
+
+  validation {
+    condition = alltrue([
+      for c in var.allowed_mgmt_cidrs :
+      can(cidrhost(c, 0)) && c != "0.0.0.0/0"
+    ])
+    error_message = "Each allowed_mgmt_cidrs entry must be a valid CIDR and must not be 0.0.0.0/0."
+  }
+}
+
 variable "vm_size" {
   description = "Azure VM size for ISE nodes"
   type        = string
