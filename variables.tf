@@ -8,6 +8,11 @@
 variable "subscription_id" {
   description = "Azure Subscription ID"
   type        = string
+
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$", var.subscription_id))
+    error_message = "subscription_id must be a GUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
+  }
 }
 
 variable "admin_username" {
@@ -19,6 +24,11 @@ variable "admin_username" {
 variable "ssh_public_key" {
   description = "SSH public key for VM access"
   type        = string
+
+  validation {
+    condition     = can(regex("^(ssh-rsa|ssh-ed25519|ecdsa-sha2-\\S+) \\S+", var.ssh_public_key))
+    error_message = "ssh_public_key must be an OpenSSH public key (e.g. 'ssh-rsa AAAA... comment')."
+  }
 }
 
 variable "vm_size" {
