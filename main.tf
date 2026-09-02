@@ -25,7 +25,7 @@ provider "azurerm" {
 resource "azurerm_resource_group" "uks_rg" {
   name     = var.uks_resource_group_name
   location = var.uks_location
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -40,7 +40,7 @@ resource "azurerm_virtual_network" "uks_vnet" {
   address_space       = [var.uks_vnet_cidr]
   location            = azurerm_resource_group.uks_rg.location
   resource_group_name = azurerm_resource_group.uks_rg.name
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -60,7 +60,7 @@ resource "azurerm_network_security_group" "uks_nsg" {
   name                = var.uks_nsg_name
   location            = azurerm_resource_group.uks_rg.location
   resource_group_name = azurerm_resource_group.uks_rg.name
-  
+
   # Allow all inbound (you can restrict this later)
   security_rule {
     name                       = "AllowAllInbound"
@@ -73,7 +73,7 @@ resource "azurerm_network_security_group" "uks_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-  
+
   # Allow all outbound (you can restrict this later)
   security_rule {
     name                       = "AllowAllOutbound"
@@ -86,7 +86,7 @@ resource "azurerm_network_security_group" "uks_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -104,7 +104,7 @@ resource "azurerm_route_table" "uks_rt" {
   name                = var.uks_route_table_name
   location            = azurerm_resource_group.uks_rg.location
   resource_group_name = azurerm_resource_group.uks_rg.name
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -124,7 +124,7 @@ resource "azurerm_public_ip" "uks_ise_pip" {
   resource_group_name = azurerm_resource_group.uks_rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -136,7 +136,7 @@ resource "azurerm_network_interface" "uks_ise_nic" {
   name                = "${var.uks_vm_name}-nic"
   location            = azurerm_resource_group.uks_rg.location
   resource_group_name = azurerm_resource_group.uks_rg.name
-  
+
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.uks_ise_subnet.id
@@ -144,7 +144,7 @@ resource "azurerm_network_interface" "uks_ise_nic" {
     private_ip_address            = var.uks_vm_private_ip
     public_ip_address_id          = azurerm_public_ip.uks_ise_pip.id
   }
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -158,7 +158,7 @@ resource "azurerm_linux_virtual_machine" "uks_ise_vm" {
   resource_group_name = azurerm_resource_group.uks_rg.name
   size                = var.vm_size
   admin_username      = var.admin_username
-  
+
   # ISE Configuration via user_data (cloud-init)
   user_data = base64encode(<<-EOT
     hostname=${var.uks_vm_name}
@@ -166,43 +166,43 @@ resource "azurerm_linux_virtual_machine" "uks_ise_vm" {
     dnsdomain=test.com
     ntpserver=time.windows.com
     timezone=Etc/UTC
-    password=Extr748a
+    password=${var.ise_admin_password}
     ersapi=no
     openapi=no
     pxGrid=no
     pxgrid_cloud=no
   EOT
   )
-  
+
   network_interface_ids = [
     azurerm_network_interface.uks_ise_nic.id,
   ]
-  
+
   admin_ssh_key {
     username   = var.admin_username
     public_key = var.ssh_public_key
   }
-  
+
   os_disk {
     name                 = "${var.uks_vm_name}-osdisk"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
     disk_size_gb         = 600
   }
-  
+
   plan {
     name      = var.ise_image_sku
     product   = var.ise_image_offer
     publisher = var.ise_image_publisher
   }
-  
+
   source_image_reference {
     publisher = var.ise_image_publisher
     offer     = var.ise_image_offer
     sku       = var.ise_image_sku
     version   = var.ise_image_version
   }
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -218,7 +218,7 @@ resource "azurerm_linux_virtual_machine" "uks_ise_vm" {
 resource "azurerm_resource_group" "ukw_rg" {
   name     = var.ukw_resource_group_name
   location = var.ukw_location
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -233,7 +233,7 @@ resource "azurerm_virtual_network" "ukw_vnet" {
   address_space       = [var.ukw_vnet_cidr]
   location            = azurerm_resource_group.ukw_rg.location
   resource_group_name = azurerm_resource_group.ukw_rg.name
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -253,7 +253,7 @@ resource "azurerm_network_security_group" "ukw_nsg" {
   name                = var.ukw_nsg_name
   location            = azurerm_resource_group.ukw_rg.location
   resource_group_name = azurerm_resource_group.ukw_rg.name
-  
+
   # Allow all inbound (you can restrict this later)
   security_rule {
     name                       = "AllowAllInbound"
@@ -266,7 +266,7 @@ resource "azurerm_network_security_group" "ukw_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-  
+
   # Allow all outbound (you can restrict this later)
   security_rule {
     name                       = "AllowAllOutbound"
@@ -279,7 +279,7 @@ resource "azurerm_network_security_group" "ukw_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -297,7 +297,7 @@ resource "azurerm_route_table" "ukw_rt" {
   name                = var.ukw_route_table_name
   location            = azurerm_resource_group.ukw_rg.location
   resource_group_name = azurerm_resource_group.ukw_rg.name
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -317,7 +317,7 @@ resource "azurerm_public_ip" "ukw_ise_pip" {
   resource_group_name = azurerm_resource_group.ukw_rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -329,7 +329,7 @@ resource "azurerm_network_interface" "ukw_ise_nic" {
   name                = "${var.ukw_vm_name}-nic"
   location            = azurerm_resource_group.ukw_rg.location
   resource_group_name = azurerm_resource_group.ukw_rg.name
-  
+
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.ukw_ise_subnet.id
@@ -337,7 +337,7 @@ resource "azurerm_network_interface" "ukw_ise_nic" {
     private_ip_address            = var.ukw_vm_private_ip
     public_ip_address_id          = azurerm_public_ip.ukw_ise_pip.id
   }
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"
@@ -351,7 +351,7 @@ resource "azurerm_linux_virtual_machine" "ukw_ise_vm" {
   resource_group_name = azurerm_resource_group.ukw_rg.name
   size                = var.vm_size
   admin_username      = var.admin_username
-  
+
   # ISE Configuration via user_data (cloud-init)
   user_data = base64encode(<<-EOT
     hostname=${var.ukw_vm_name}
@@ -359,43 +359,43 @@ resource "azurerm_linux_virtual_machine" "ukw_ise_vm" {
     dnsdomain=test.com
     ntpserver=time.windows.com
     timezone=Etc/UTC
-    password=Extr748a
+    password=${var.ise_admin_password}
     ersapi=no
     openapi=no
     pxGrid=no
     pxgrid_cloud=no
   EOT
   )
-  
+
   network_interface_ids = [
     azurerm_network_interface.ukw_ise_nic.id,
   ]
-  
+
   admin_ssh_key {
     username   = var.admin_username
     public_key = var.ssh_public_key
   }
-  
+
   os_disk {
     name                 = "${var.ukw_vm_name}-osdisk"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
     disk_size_gb         = 600
   }
-  
+
   plan {
     name      = var.ise_image_sku
     product   = var.ise_image_offer
     publisher = var.ise_image_publisher
   }
-  
+
   source_image_reference {
     publisher = var.ise_image_publisher
     offer     = var.ise_image_offer
     sku       = var.ise_image_sku
     version   = var.ise_image_version
   }
-  
+
   tags = {
     Environment = "Lab"
     Project     = "ISE-HA"

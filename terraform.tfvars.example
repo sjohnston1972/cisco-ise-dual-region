@@ -12,6 +12,12 @@ admin_username = "iseadmin"
 # Then paste the contents of ise-key.pub here
 ssh_public_key = "SSH KEY HERE"
 
+# Initial ISE admin password (set at first boot via user_data).
+# This is sensitive - set a real, strong value in your own terraform.tfvars
+# (which is gitignored) or pass it via TF_VAR_ise_admin_password / a secret
+# store. NEVER commit the real value.
+ise_admin_password = "CHANGE_ME_DO_NOT_COMMIT_REAL_VALUE"
+
 # VM Size (D8s_v4 = 8 vCPU, 32GB RAM)
 vm_size = "Standard_D8s_v4"
 

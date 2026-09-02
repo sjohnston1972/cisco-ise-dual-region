@@ -31,6 +31,12 @@ variable "ssh_public_key" {
   }
 }
 
+variable "ise_admin_password" {
+  description = "Initial ISE admin password (set at first boot via user_data). Must be supplied at apply time (tfvars/env/secret store) - never hardcode this or commit a real value."
+  type        = string
+  sensitive   = true
+}
+
 variable "vm_size" {
   description = "Azure VM size for ISE nodes"
   type        = string
