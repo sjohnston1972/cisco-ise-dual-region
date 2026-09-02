@@ -23,6 +23,11 @@ ise_admin_password = "CHANGE_ME_DO_NOT_COMMIT_REAL_VALUE"
 # or VPN client pool. 0.0.0.0/0 is rejected by validation.
 allowed_mgmt_cidrs = ["203.0.113.10/32"]
 
+# Assign a public IP to each ISE VM. Default is false (private-only;
+# access via VPN/Bastion/VNet peering). Set to true to restore the old
+# always-public-IP behaviour - allowed_mgmt_cidrs still applies either way.
+enable_public_ip = false
+
 # VM Size (D8s_v4 = 8 vCPU, 32GB RAM)
 vm_size = "Standard_D8s_v4"
 

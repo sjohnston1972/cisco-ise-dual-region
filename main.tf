@@ -148,8 +148,12 @@ resource "azurerm_subnet_route_table_association" "uks_rt_assoc" {
   route_table_id = azurerm_route_table.uks_rt.id
 }
 
-# Public IP for UK South ISE (for management access)
+# Public IP for UK South ISE (for management access) - opt-in via
+# var.enable_public_ip (default false). Prefer VPN/Bastion/VNet peering
+# for private access; if you do enable this, allowed_mgmt_cidrs still
+# scopes who can reach it.
 resource "azurerm_public_ip" "uks_ise_pip" {
+  count               = var.enable_public_ip ? 1 : 0
   name                = "${var.uks_vm_name}-pip"
   location            = azurerm_resource_group.uks_rg.location
   resource_group_name = azurerm_resource_group.uks_rg.name
@@ -173,7 +177,7 @@ resource "azurerm_network_interface" "uks_ise_nic" {
     subnet_id                     = azurerm_subnet.uks_ise_subnet.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.uks_vm_private_ip
-    public_ip_address_id          = azurerm_public_ip.uks_ise_pip.id
+    public_ip_address_id          = var.enable_public_ip ? azurerm_public_ip.uks_ise_pip[0].id : null
   }
 
   tags = {
@@ -372,8 +376,12 @@ resource "azurerm_subnet_route_table_association" "ukw_rt_assoc" {
   route_table_id = azurerm_route_table.ukw_rt.id
 }
 
-# Public IP for UK West ISE (for management access)
+# Public IP for UK West ISE (for management access) - opt-in via
+# var.enable_public_ip (default false). Prefer VPN/Bastion/VNet peering
+# for private access; if you do enable this, allowed_mgmt_cidrs still
+# scopes who can reach it.
 resource "azurerm_public_ip" "ukw_ise_pip" {
+  count               = var.enable_public_ip ? 1 : 0
   name                = "${var.ukw_vm_name}-pip"
   location            = azurerm_resource_group.ukw_rg.location
   resource_group_name = azurerm_resource_group.ukw_rg.name
@@ -397,7 +405,7 @@ resource "azurerm_network_interface" "ukw_ise_nic" {
     subnet_id                     = azurerm_subnet.ukw_ise_subnet.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.ukw_vm_private_ip
-    public_ip_address_id          = azurerm_public_ip.ukw_ise_pip.id
+    public_ip_address_id          = var.enable_public_ip ? azurerm_public_ip.ukw_ise_pip[0].id : null
   }
 
   tags = {

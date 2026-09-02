@@ -24,7 +24,7 @@ This Terraform configuration deploys Cisco Identity Services Engine (ISE) 3.3 in
 - 2x Subnets (one per region)
 - 2x Network Security Groups (management restricted to `var.allowed_mgmt_cidrs`)
 - 2x Route Tables
-- 2x Public IPs (for management access)
+- 2x Public IPs (opt-in via `enable_public_ip`, default off - see below)
 - 2x Network Interfaces
 - 2x ISE VMs (Standard_D8s_v4 - 8 vCPU, 32GB RAM)
 
@@ -149,15 +149,22 @@ az network vnet peering create `
 
 ### Step 8: Access ISE Setup Wizard
 
-Get the public IPs from Terraform outputs:
+**Public IPs are opt-in and off by default.** Each ISE VM gets a public IP
+only if `enable_public_ip = true` is set in `terraform.tfvars`. With the
+default (`false`), no public IP is created and you must reach the ISE
+private IPs via VPN, Azure Bastion, or VNet peering instead - the NSGs
+still only allow management traffic (443/22) from `allowed_mgmt_cidrs`
+regardless of which path you use.
+
+Get the public IPs (if enabled) from Terraform outputs:
 
 ```powershell
 terraform output
 ```
 
 Access ISE in your browser:
-- **Primary:** `https://<uks_ise_public_ip>`
-- **Secondary:** `https://<ukw_ise_public_ip>`
+- **Primary:** `https://<uks_ise_public_ip>` (or the private IP, over VPN/Bastion/peering)
+- **Secondary:** `https://<ukw_ise_public_ip>` (or the private IP, over VPN/Bastion/peering)
 
 **Initial credentials:**
 - Username: `iseadmin`

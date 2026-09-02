@@ -1,5 +1,13 @@
 # Outputs - Information displayed after Terraform deployment
 
+# Public IPs are opt-in (var.enable_public_ip, default false) - see #9.
+# These locals resolve to a friendly placeholder instead of erroring when
+# no public IP was created.
+locals {
+  uks_ise_public_ip = try(azurerm_public_ip.uks_ise_pip[0].ip_address, "none (enable_public_ip=false)")
+  ukw_ise_public_ip = try(azurerm_public_ip.ukw_ise_pip[0].ip_address, "none (enable_public_ip=false)")
+}
+
 #################################################
 # UK SOUTH (PRIMARY) OUTPUTS
 #################################################
@@ -25,8 +33,8 @@ output "uks_ise_private_ip" {
 }
 
 output "uks_ise_public_ip" {
-  description = "UK South ISE Public IP (for management access)"
-  value       = azurerm_public_ip.uks_ise_pip.ip_address
+  description = "UK South ISE Public IP (for management access, if enable_public_ip=true)"
+  value       = local.uks_ise_public_ip
 }
 
 output "uks_ise_vm_name" {
@@ -59,8 +67,8 @@ output "ukw_ise_private_ip" {
 }
 
 output "ukw_ise_public_ip" {
-  description = "UK West ISE Public IP (for management access)"
-  value       = azurerm_public_ip.ukw_ise_pip.ip_address
+  description = "UK West ISE Public IP (for management access, if enable_public_ip=true)"
+  value       = local.ukw_ise_public_ip
 }
 
 output "ukw_ise_vm_name" {
@@ -74,7 +82,7 @@ output "ukw_ise_vm_name" {
 
 output "deployment_summary" {
   description = "Deployment Summary"
-  value = <<-EOT
+  value       = <<-EOT
   
   ╔════════════════════════════════════════════════════════════════╗
   ║           ISE DUAL-REGION DEPLOYMENT COMPLETE                  ║
@@ -84,33 +92,32 @@ output "deployment_summary" {
   -------------------------
   VM Name:        ${azurerm_linux_virtual_machine.uks_ise_vm.name}
   Private IP:     ${azurerm_network_interface.uks_ise_nic.private_ip_address}
-  Public IP:      ${azurerm_public_ip.uks_ise_pip.ip_address}
-  Management URL: https://${azurerm_public_ip.uks_ise_pip.ip_address}
-  
+  Public IP:      ${local.uks_ise_public_ip}
+
   SECONDARY NODE (UK WEST):
   -------------------------
   VM Name:        ${azurerm_linux_virtual_machine.ukw_ise_vm.name}
   Private IP:     ${azurerm_network_interface.ukw_ise_nic.private_ip_address}
-  Public IP:      ${azurerm_public_ip.ukw_ise_pip.ip_address}
-  Management URL: https://${azurerm_public_ip.ukw_ise_pip.ip_address}
-  
+  Public IP:      ${local.ukw_ise_public_ip}
+
   ╔════════════════════════════════════════════════════════════════╗
   ║                     NEXT STEPS                                 ║
   ╚════════════════════════════════════════════════════════════════╝
-  
+
   1. Wait 15-20 minutes for ISE to fully boot
-  
+
   2. Configure VNet Peering between regions:
      - UK South VNet ID: ${azurerm_virtual_network.uks_vnet.id}
      - UK West VNet ID:  ${azurerm_virtual_network.ukw_vnet.id}
-  
-  3. Access ISE Setup Wizard:
-     - Primary:   https://${azurerm_public_ip.uks_ise_pip.ip_address}
-     - Secondary: https://${azurerm_public_ip.ukw_ise_pip.ip_address}
+
+  3. Access ISE Setup Wizard (requires enable_public_ip=true, or reach the
+     private IPs above via VPN/Bastion/peering):
+     - Primary:   https://${local.uks_ise_public_ip}
+     - Secondary: https://${local.ukw_ise_public_ip}
      - Username: ${var.admin_username}
      - Set passwords during initial setup
-  
+
   4. Configure Primary node first, then register Secondary
-  
+
   EOT
 }

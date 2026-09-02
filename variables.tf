@@ -64,6 +64,12 @@ variable "allowed_mgmt_cidrs" {
   }
 }
 
+variable "enable_public_ip" {
+  description = "Assign a public IP to each ISE VM. Default off - reduces attack surface; use VPN/Bastion/VNet peering for private access, or set this to true and rely on allowed_mgmt_cidrs to scope who can reach it."
+  type        = bool
+  default     = false
+}
+
 variable "vm_size" {
   description = "Azure VM size for ISE nodes"
   type        = string
