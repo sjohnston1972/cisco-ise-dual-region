@@ -22,7 +22,7 @@ This Terraform configuration deploys Cisco Identity Services Engine (ISE) 3.3 in
 - 2x Resource Groups (one per region)
 - 2x Virtual Networks (one per region)
 - 2x Subnets (one per region)
-- 2x Network Security Groups (permit all for now)
+- 2x Network Security Groups (management restricted to `var.allowed_mgmt_cidrs`)
 - 2x Route Tables
 - 2x Public IPs (for management access)
 - 2x Network Interfaces
@@ -282,7 +282,7 @@ terraform plan
 5. ✅ Register Secondary to Primary
 6. Configure ISE policies and network devices
 7. Test ISE HA failover
-8. Restrict NSGs (currently permit all)
+8. Review `allowed_mgmt_cidrs` and narrow it further if your admin source networks change
 9. Configure UDRs if needed for routing
 
 ## Learning Resources

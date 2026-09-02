@@ -61,20 +61,51 @@ resource "azurerm_network_security_group" "uks_nsg" {
   location            = azurerm_resource_group.uks_rg.location
   resource_group_name = azurerm_resource_group.uks_rg.name
 
-  # Allow all inbound (you can restrict this later)
+  # Least-privilege inbound: ISE management (HTTPS/SSH) only from the
+  # explicit allow-list in var.allowed_mgmt_cidrs, plus the peer region's
+  # ISE subnet for inter-node HA/replication traffic. Azure NSGs deny
+  # everything else by default (implicit DenyAllInbound), so no explicit
+  # deny rule is required.
   security_rule {
-    name                       = "AllowAllInbound"
+    name                       = "AllowMgmtHTTPS"
     priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefixes    = var.allowed_mgmt_cidrs
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "AllowMgmtSSH"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefixes    = var.allowed_mgmt_cidrs
+    destination_address_prefix = "*"
+  }
+
+  # Allow the UK West ISE subnet to reach this node for HA/replication.
+  security_rule {
+    name                       = "AllowPeerRegionIse"
+    priority                   = 120
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "*"
     source_port_range          = "*"
     destination_port_range     = "*"
-    source_address_prefix      = "*"
+    source_address_prefix      = var.ukw_subnet_cidr
     destination_address_prefix = "*"
   }
 
-  # Allow all outbound (you can restrict this later)
+  # Outbound left permissive for now (ISE needs outbound for updates,
+  # feeds, DNS/NTP, etc.) - narrowing this is tracked as a follow-up and
+  # is out of scope for this NSG-inbound hardening pass (see #8).
   security_rule {
     name                       = "AllowAllOutbound"
     priority                   = 100
@@ -254,20 +285,51 @@ resource "azurerm_network_security_group" "ukw_nsg" {
   location            = azurerm_resource_group.ukw_rg.location
   resource_group_name = azurerm_resource_group.ukw_rg.name
 
-  # Allow all inbound (you can restrict this later)
+  # Least-privilege inbound: ISE management (HTTPS/SSH) only from the
+  # explicit allow-list in var.allowed_mgmt_cidrs, plus the peer region's
+  # ISE subnet for inter-node HA/replication traffic. Azure NSGs deny
+  # everything else by default (implicit DenyAllInbound), so no explicit
+  # deny rule is required.
   security_rule {
-    name                       = "AllowAllInbound"
+    name                       = "AllowMgmtHTTPS"
     priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefixes    = var.allowed_mgmt_cidrs
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "AllowMgmtSSH"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefixes    = var.allowed_mgmt_cidrs
+    destination_address_prefix = "*"
+  }
+
+  # Allow the UK South ISE subnet to reach this node for HA/replication.
+  security_rule {
+    name                       = "AllowPeerRegionIse"
+    priority                   = 120
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "*"
     source_port_range          = "*"
     destination_port_range     = "*"
-    source_address_prefix      = "*"
+    source_address_prefix      = var.uks_subnet_cidr
     destination_address_prefix = "*"
   }
 
-  # Allow all outbound (you can restrict this later)
+  # Outbound left permissive for now (ISE needs outbound for updates,
+  # feeds, DNS/NTP, etc.) - narrowing this is tracked as a follow-up and
+  # is out of scope for this NSG-inbound hardening pass (see #8).
   security_rule {
     name                       = "AllowAllOutbound"
     priority                   = 100
